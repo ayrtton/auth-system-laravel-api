@@ -22,5 +22,9 @@ Route::group(['prefix' => 'v1'], function () {
 
     Route::group(['middleware' => 'auth:api'], function () {
         Route::get('users', [UserController::class, 'index']);
+
+        Route::post('me', [AuthController::class, 'me']);
+    
+        Route::post('logout', [AuthController::class, 'logout']);
     });
 });
