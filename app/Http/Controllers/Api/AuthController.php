@@ -43,6 +43,8 @@ class AuthController extends Controller
                 'password' => Hash::make($request->password),
             ]);
 
+            $user->sendEmailVerificationNotification();
+
             $token = $user->createToken('User Token')->accessToken;
 
             return response([
