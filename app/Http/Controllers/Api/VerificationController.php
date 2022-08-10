@@ -24,14 +24,14 @@ class VerificationController extends Controller
         }
 
         if ($request->user()->hasVerifiedEmail()) {
-            return response(['message' => 'Email already verified.']);
+            return redirect('https://login-signup-system.vercel.app/info/Email already verified.');
         }
 
         if ($request->user()->markEmailAsVerified()) {
             event(new Verified($request->user()));
         }
 
-        return response(['message' => 'Email successfully verified.']);
+        return redirect('https://login-signup-system.vercel.app/success/Email successfully verified!');
     }
 
     public function resend(Request $request) {
