@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use Exception;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Auth\Events\Verified;
 use Illuminate\Foundation\Auth\VerifiesEmails;
@@ -34,17 +35,23 @@ class VerificationController extends Controller
         return redirect('https://login-signup-system.vercel.app/success/Email successfully verified!');
     }
 
-    public function resend(Request $request) {
-        if ($request->user()->hasVerifiedEmail()) {
-            return response(['message' => 'Email already verified.']);
+    public function resend() {
+        try {
+            if (auth()->user()->hasVerifiedEmail()) {
+                return response([
+                    'message' => 'Email already verified.'
+                ], 200);
+            }
+            
+            auth()->user()->sendEmailVerificationNotification();
+
+            return response([
+                'message' => 'Email successfully verified.'
+            ], 200);
+        } catch (Exception $exception) {
+            return response([
+                'message' => $exception->getMessage()
+            ], 400);
         }
-        
-        $request->user()->sendEmailVerificationNotification();
-
-        if($request->wantsJson()) {
-            return response(['message' => 'Email successfully verified.']);
-        } 
-
-        return back()->with('resend', true);
     }
 }
