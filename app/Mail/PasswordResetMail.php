@@ -32,7 +32,7 @@ class PasswordResetMail extends Mailable
         $email = $this->email;
         $token = $this->token;
 
-        return $this->from('laravelapi@email.com.br')
+        return $this->from('php.email36@gmail.com')
             ->markdown('mail.reset', compact('email', 'token'))
             ->subject('Password Reset');
     }
