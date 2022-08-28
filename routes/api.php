@@ -26,7 +26,7 @@ Route::group(['prefix' => 'v1'], function () {
     Route::post('resend-verification-mail', [VerificationController::class, 'resend'])->name('verification.resend');
 
     Route::post('password-reset-mail', [PasswordResetController::class, 'sendPasswordResetMail']);
-    Route::post('password-reset', [PasswordResetController::class, 'resetPassword']);
+    Route::post('password-reset', [PasswordResetController::class, 'resetPassword'])->name('password.reset');
 
     Route::group(['middleware' => 'auth:api'], function () {
         Route::group(['middleware' => 'verified'], function() {

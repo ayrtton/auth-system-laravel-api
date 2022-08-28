@@ -8,67 +8,56 @@ use App\Http\Requests\PasswordResetRequest;
 use App\Mail\PasswordResetMail;
 use App\Models\User;
 use Exception;
+use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Password;
+use Illuminate\Validation\ValidationException;
+use Illuminate\Validation\Rules\Password as RulesPassword;
+use Illuminate\Support\Str;
 
 class PasswordResetController extends Controller
 {
     public function sendPasswordResetMail(PasswordResetMailRequest $request) {
-        $email = $request->email;
+        $status = Password::sendResetLink(
+            $request->only('email')
+        );
 
-        if(User::where('email', $email)->doesntExist()) {
-            return response([
-                'message' => 'Invalid email address.'
-            ], 401);
+        if ($status == Password::RESET_LINK_SENT) {
+            return [
+                'status' => __($status)
+            ];
         }
 
-        $token = rand(10, 100000);
-
-        try {
-            DB::table('password_resets')->insert([
-                'email' => $email,
-                'token' => $token,
-            ]);
-
-            Mail::to($email)->send(new PasswordResetMail($email, $token));
-
-            return response([
-                'message' => 'Password reset email sent successfully.',
-            ], 200);
-
-        } catch(Exception $exception) {
-            return response([
-                'message' => $exception->getMessage()
-            ], 400);
-        }
+        throw ValidationException::withMessages([
+            'email' => [trans($status)],
+        ]);
     }
 
     public function resetPassword(PasswordResetRequest $request) {
-        $email = $request->email;
-        $token = $request->token;
-        $password = Hash::make($request->password);
-        
-        $emailCheck = DB::table('password_resets')->where('email', $email)->first();
-        $tokenCheck = DB::table('password_resets')->where('token', $token)->first();
+        $status = Password::reset(
+            $request->only('email', 'password', 'password_confirmation', 'token'),
+            function ($user) use ($request) {
+                $user->forceFill([
+                    'password' => Hash::make($request->password),
+                    'remember_token' => Str::random(60),
+                ])->save();
 
-        if(!$emailCheck) {
+                $user->tokens()->delete();
+
+                event(new PasswordReset($user));
+            }
+        );
+
+        if ($status == Password::PASSWORD_RESET) {
             return response([
-                'message' => "Email address not found.",
-            ], 401);
+                'message' => 'Password reset successfully.'
+            ]);
         }
-
-        if(!$tokenCheck) {
-            return response([
-                'message' => "Invalid token."
-            ], 401);
-        }
-
-        DB::table('users')->where('email', $email)->update(['password' => $password]);
-        DB::table('password_resets')->where('email', $email)->delete();
 
         return response([
-            'message' => 'Your password has been successfully reset.'
-        ], 200);
+            'message' => __($status)
+        ], 500);
     }
 }
