@@ -9,4 +9,4 @@ Login and sign up system built as a REST API in PHP and Laravel. It is consumed 
 - Heroku
 - Postman
 
-Front-end Respository: https://github.com/ayrtton/login-signup
+Front-end Repository: https://github.com/ayrtton/login-signup
